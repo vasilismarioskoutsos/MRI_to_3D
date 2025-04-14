@@ -1,0 +1,48 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  # build and test job
+  build:
+    runs-on: ubuntu-latest   
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      # set up python
+      - name: set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'       
+
+      - name: install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # tests
+      - name: run tests
+        run: |
+          pytest
+
+  # deploy job
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: login to Heroku
+        uses: akhileshns/heroku-deploy@v4.1.6
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: "heroku_app"
+          heroku_email: "vasilismarioskoutsos.com"
